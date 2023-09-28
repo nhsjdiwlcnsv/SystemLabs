@@ -1,9 +1,18 @@
 #ifndef UNICODE
 #define UNICODE
-#endif 
+#endif
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
 
 #include <iostream>
 #include <windows.h>
+// #include "CSVRow.h"
+
+
+/*std::istream& operator>>(std::istream& str, CSVRow& data) {
+    data.readNextRow(str);
+    return str;
+}*/
 
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -27,7 +36,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
         // x, y, width, height
         CW_USEDEFAULT,  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        
+
         nullptr, // parent
         nullptr, // menu
         hInstance, // instance handle
@@ -36,6 +45,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
     if (hwnd == nullptr)
         return 0;
+
+    std::ifstream file("C:/Users/mishashkarubski/SystemLabs/test.csv");
+
+    std::cout << "HNDFKJSNDFKJNSDFJKNSDKJFNJKSDNFJKSNDFJKNSDJFKND" << std::endl;
+
+    CSVRow row;
+
+    while (file >> row)
+        std::cout << "4th Element(" << row[3] << ")\n";
 
     ShowWindow(hwnd, nCmdShow);
 
@@ -57,7 +75,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 HDC hdc = BeginPaint(hwnd, &ps);
 
                 FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
-                
+
                 EndPaint(hwnd, &ps);
             }
 
@@ -71,7 +89,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         case WM_DESTROY:
             PostQuitMessage(0);
             return 0;
-        
+
         default:
             return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
