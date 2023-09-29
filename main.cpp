@@ -18,17 +18,20 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 
 HWND gListView;
+HWND pathInputHandle;
+HWND pathButtonHandle;
 HWND xInputHandle;
 HWND yInputHandle;
-HWND buttonHandle;
+HWND graphButtonHandle;
 HWND graphHandle;
 
 struct Point {
-    double x;
-    double y;
+    int x;
+    int y;
 };
 
 std::vector<Point> points;
+wchar_t csvFilePath[128];
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 std::vector<std::wstring> GetCSVColumns(const std::wstring& filePath);
@@ -64,22 +67,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
         nullptr // additional data
     );
 
+    pathInputHandle = CreateWindowEx(
+        0, L"EDIT", L"Path to .csv file",
+        WS_VISIBLE | WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE,
+        10, 10, 160, 40, hwnd, nullptr, hInstance, nullptr
+    );
+
+    pathButtonHandle = CreateWindowEx(
+        0, L"BUTTON", L"Submit",
+        WS_VISIBLE | WS_CHILD,
+        200, 10, 160, 40, hwnd, nullptr, hInstance, nullptr
+    );
+
     xInputHandle = CreateWindowEx(
         0, L"EDIT", L"X",
-        WS_VISIBLE | WS_CHILD,
-        600, 500, 100, 100, hwnd, nullptr, hInstance, nullptr
+        WS_VISIBLE | WS_CHILD | WS_VISIBLE | WS_BORDER,
+        400, 520, 80, 40, hwnd, nullptr, hInstance, nullptr
     );
 
     yInputHandle = CreateWindowEx(
         0, L"EDIT", L"Y",
-        WS_VISIBLE | WS_CHILD,
-        750, 500, 100, 100, hwnd, nullptr, hInstance, nullptr
+        WS_VISIBLE | WS_CHILD | WS_VISIBLE | WS_BORDER,
+        500, 520, 80, 40, hwnd, nullptr, hInstance, nullptr
     ); 
 
-    buttonHandle = CreateWindowEx(
+    graphButtonHandle = CreateWindowEx(
         0, L"BUTTON", L"Add to graph",
         WS_VISIBLE | WS_CHILD,
-        600, 650, 200, 100, hwnd, nullptr, hInstance, nullptr
+        600, 520, 160, 40, hwnd, nullptr, hInstance, nullptr
     );
 
     graphHandle = CreateWindowEx(
@@ -91,11 +106,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
     HFONT font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
         CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
 
-    SendMessage(xInputHandle, WM_SETFONT, (WPARAM)font, TRUE);
-    SendMessage(yInputHandle, WM_SETFONT, (WPARAM)font, TRUE);
-    SendMessage(buttonHandle, WM_SETFONT, (WPARAM)font, TRUE);
-
-    SendMessage(buttonHandle, WM_CTLCOLORBTN, 0, RGB(0, 128, 255));   // Set button background color to light blue
+    SendMessage(pathInputHandle, WM_SETFONT, (WPARAM) font, TRUE);
+    SendMessage(pathButtonHandle, WM_SETFONT, (WPARAM) font, TRUE);
+    SendMessage(xInputHandle, WM_SETFONT, (WPARAM) font, TRUE);
+    SendMessage(yInputHandle, WM_SETFONT, (WPARAM) font, TRUE);
+    SendMessage(graphButtonHandle, WM_SETFONT, (WPARAM) font, TRUE);
 
     if (hwnd == nullptr)
         return 1;
@@ -115,46 +130,57 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
-        case WM_CREATE:
-        {
-            gListView = CreateWindow(
-                WC_LISTVIEW, L"",
-                WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
-                10, 10, 400, 300, hwnd, nullptr, nullptr, nullptr
-            );
-
-            std::vector<std::wstring> headers = GetCSVColumns(L"C:/Users/mishashkarubski/SystemLabs/test.csv");
-
-            LV_COLUMN lvColumn;
-            lvColumn.mask = LVCF_TEXT;
-
-            for (int i = 0; i < headers.size(); ++i) {
-                lvColumn.pszText = headers[i].data();
-                ListView_InsertColumn(gListView, i, &lvColumn);
-            }
-
-            DisplayCSVInListView(L"C:/Users/mishashkarubski/SystemLabs/test.csv", gListView);
-        };
-        
-            break;
-
         case WM_COMMAND:
         {
             if (HIWORD(wParam) == BN_CLICKED) {
-                if ((HWND)lParam == buttonHandle) {
+                if ((HWND)lParam == graphButtonHandle) {
                     wchar_t xText[128];
                     wchar_t yText[128];
 
                     GetWindowText(xInputHandle, xText, 128);
                     GetWindowText(yInputHandle, yText, 128);
 
-                    double xValue = atof((char*) xText);
-                    double yValue = atof((char*) yText);
+                    int xValue = _wtoi(xText);
+                    int yValue = _wtoi(yText);
+
+                    if ((std::strcmp((const char*) xText, "0") && xValue == 0) || (std::strcmp((const char*)yText, "0") && yValue == 0)) {
+                        MessageBox(nullptr, L"Nigga, what the fuck?", L"ANOGA", MB_OK | MB_ICONERROR);
+                        break;
+                    }
 
                     points.push_back({ xValue, yValue });
 
                     // Update the graph
                     LinePlot(graphHandle);
+                }
+
+                else if ((HWND)lParam == pathButtonHandle) {
+                    GetWindowText(pathInputHandle, csvFilePath, 128);
+
+                    std::wifstream file(csvFilePath);
+
+                    if (!file) {
+                        MessageBox(nullptr, L"Nigga, what the fuck?", L"ANOGA", MB_OK | MB_ICONERROR);
+                        break;
+                    }
+
+                    gListView = CreateWindow(
+                        WC_LISTVIEW, L"",
+                        WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
+                        10, 100, 400, 300, hwnd, nullptr, nullptr, nullptr
+                    );
+
+                    std::vector<std::wstring> headers = GetCSVColumns(csvFilePath);
+
+                    LV_COLUMN lvColumn;
+                    lvColumn.mask = LVCF_TEXT;
+
+                    for (int i = 0; i < headers.size(); ++i) {
+                        lvColumn.pszText = headers[i].data();
+                        ListView_InsertColumn(gListView, i, &lvColumn);
+                    }
+
+                    DisplayCSVInListView(csvFilePath, gListView);
                 }
             }
         };
@@ -178,7 +204,7 @@ std::vector<std::wstring> GetCSVColumns(const std::wstring& filePath) {
     std::wifstream file(filePath);
 
     if (!file) {
-        MessageBox(nullptr, L"Failed to open the file.", L"Error", MB_OK | MB_ICONERROR);
+        MessageBox(nullptr, L"Nigga, what the fuck?", L"Error", MB_OK | MB_ICONERROR);
         return headers;
     }
 
@@ -252,7 +278,7 @@ void LinePlot(HWND hwnd) {
 
     HDC hdc = GetDC(hwnd);
     HPEN pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
-    HBRUSH brush = CreateSolidBrush(RGB(225, 225, 225));
+    HBRUSH brush = CreateSolidBrush(RGB(245, 245, 245));
 
     SelectObject(hdc, pen);
     SelectObject(hdc, brush);
@@ -261,12 +287,24 @@ void LinePlot(HWND hwnd) {
     Point prevPoint;
     bool isFirstPoint = true;
 
-    for (auto point : points) {
+    int ySpan = (rect.bottom + rect.top) / 2;
+    int xSpan = (rect.left + rect.right) / 2;
+
+    for (int i = 0; i < points.size(); ++i) {
+        Point point = points[i];
+
         SelectObject(hdc, brush);
+
+        if ((rect.bottom + rect.top) / 2 - point.y < rect.top || (rect.left + rect.right) / 2 + point.x > rect.right) {
+            points.erase(points.begin() + i);
+            continue;
+        }
+        
+
         Ellipse(
             hdc,
-            (point.x) - 4, (rect.bottom - point.y) - 4,
-            (point.x) + 4, (rect.bottom - point.y) + 4
+            xSpan + point.x - 4, ySpan - point.y - 4,
+            xSpan + point.x + 4, ySpan - point.y + 4
         );
 
         if (isFirstPoint) {
@@ -274,8 +312,8 @@ void LinePlot(HWND hwnd) {
             prevPoint.y = point.y;
             isFirstPoint = false;
         } else {
-            MoveToEx(hdc, prevPoint.x, prevPoint.y, nullptr);
-            LineTo(hdc, point.x, point.y);
+            MoveToEx(hdc, xSpan + prevPoint.x, ySpan - prevPoint.y, nullptr);
+            LineTo(hdc, xSpan + point.x, ySpan - point.y);
             prevPoint.x = point.x;
             prevPoint.y = point.y;
         }
