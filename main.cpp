@@ -144,7 +144,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                     int yValue = _wtoi(yText);
 
                     if ((std::strcmp((const char*) xText, "0") && xValue == 0) || (std::strcmp((const char*)yText, "0") && yValue == 0)) {
-                        MessageBox(nullptr, L"Nigga, what the fuck?", L"ANOGA", MB_OK | MB_ICONERROR);
+                        MessageBox(nullptr, L"Ng wha?", L"ANOGA", MB_OK | MB_ICONERROR);
                         break;
                     }
 
@@ -156,14 +156,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
                 else if ((HWND)lParam == pathButtonHandle) {
                     GetWindowText(pathInputHandle, csvFilePath, 128);
-
-                    std::wifstream file(csvFilePath);
-
-                    if (!file) {
-                        MessageBox(nullptr, L"Nigga, what the fuck?", L"ANOGA", MB_OK | MB_ICONERROR);
-                        break;
-                    }
-
+                    
                     gListView = CreateWindow(
                         WC_LISTVIEW, L"",
                         WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
@@ -171,6 +164,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                     );
 
                     std::vector<std::wstring> headers = GetCSVColumns(csvFilePath);
+
+                    if (!headers.size())
+                        return 0;
 
                     LV_COLUMN lvColumn;
                     lvColumn.mask = LVCF_TEXT;
@@ -204,7 +200,7 @@ std::vector<std::wstring> GetCSVColumns(const std::wstring& filePath) {
     std::wifstream file(filePath);
 
     if (!file) {
-        MessageBox(nullptr, L"Nigga, what the fuck?", L"Error", MB_OK | MB_ICONERROR);
+        MessageBox(nullptr, L"Ng wha?", L"ANOGA", MB_OK | MB_ICONERROR);
         return headers;
     }
 
@@ -238,7 +234,7 @@ void DisplayCSVInListView(const std::wstring& filePath, HWND listViewHandle) {
     std::wifstream file(filePath, std::ios::in | std::ios::binary);
 
     if (!file) {
-        MessageBox(nullptr, L"Failes to open the file.", L"Error", MB_OK | MB_ICONERROR);
+        MessageBox(nullptr, L"Ng wha?", L"ANOGA", MB_OK | MB_ICONERROR);
         return;
     }
 
