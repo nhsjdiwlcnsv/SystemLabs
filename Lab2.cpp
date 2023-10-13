@@ -55,7 +55,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
     HWND hwnd = CreateWindowEx(
         0,
         CLASS_NAME,
-        L"Data vizualizer – Main window",
+        L"Data vizualizer â€“Â Main window",
         WS_OVERLAPPEDWINDOW,
 
         // x, y, width, height
