@@ -48,6 +48,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = hInstance;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+
     wc.lpszClassName = CLASS_NAME;
 
     RegisterClass(&wc);
