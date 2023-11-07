@@ -4,6 +4,8 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+
+#include "Lab7Client.h"
 #include "ClientNetwork.h"
 #include <windows.h>
 
@@ -13,6 +15,33 @@ HWND hwndInput;     // Text input field
 HWND hwndSendButton; // Send button
 HWND hwndMessageLog; // Message display area
 ClientNetwork clientNetwork;
+
+
+DWORD WINAPI ClientReceiveThread(LPVOID param) {
+    while (true) {
+        char buffer[1024];
+        wchar_t wBuffer[1024];
+
+        size_t convertedChars = 0;
+        size_t bytesRead = recv(clientNetwork.GetClientSocket(), buffer, sizeof(buffer), 0);
+
+        if (bytesRead > 0) {
+            buffer[bytesRead] = '\0';
+            mbstowcs_s(&convertedChars, wBuffer, strlen(buffer) + 1, buffer, _TRUNCATE);
+            wBuffer[bytesRead] = '\0';
+
+            // Append the received message to the message log
+            SendMessage(hwndMessageLog, EM_SETSEL, -1, -1);
+            SendMessage(hwndMessageLog, EM_REPLACESEL, 0, (LPARAM)wBuffer);
+            SendMessage(hwndMessageLog, EM_REPLACESEL, 0, (LPARAM)L"\r\n");
+        }
+
+        Sleep(1000);
+    }
+
+    return 0;
+}
+
 
 void OnSendButtonClick(HWND hWnd, ClientNetwork& clientNetwork) {
     wchar_t wMessage[256];
@@ -38,17 +67,22 @@ void OnSendButtonClick(HWND hWnd, ClientNetwork& clientNetwork) {
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-    case WM_COMMAND:
-        if (lParam == (LPARAM)hwndSendButton && HIWORD(wParam) == BN_CLICKED)
-            OnSendButtonClick(hWnd, clientNetwork);
+        case WM_CREATE:
+            // Start the message reception thread when the window is created
+            CreateThread(NULL, 0, ClientReceiveThread, hWnd, 0, NULL);
+            break;
 
-        break;
+        case WM_COMMAND:
+            if (lParam == (LPARAM)hwndSendButton && HIWORD(wParam) == BN_CLICKED)
+                OnSendButtonClick(hWnd, clientNetwork);
 
-        // Handle other window messages here
+            break;
 
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
+            // Handle other window messages here
+
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
     return 0;
 }
 
@@ -71,7 +105,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wcex.lpszClassName = L"Lab7ClientWindowClass";
     RegisterClassEx(&wcex);
 
-    HWND hWnd = CreateWindow(L"Lab7ClientWindowClass", L"Lab78Client", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 450, 350, NULL, NULL, hInstance, NULL);
+    HWND hWnd = CreateWindow(L"Lab7ClientWindowClass", L"Lab7Client", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 450, 350, NULL, NULL, hInstance, NULL);
 
     // Create GUI controls
     hwndInput = CreateWindow(L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 10, 10, 300, 30, hWnd, NULL, hInstance, NULL);
@@ -91,3 +125,4 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     return 0;
 }
+

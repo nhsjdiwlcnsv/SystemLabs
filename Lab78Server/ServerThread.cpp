@@ -1,36 +1,34 @@
 //
 // Created by Mikhail Shkarubski on 7.11.23.
 //
-
 #pragma comment(lib, "Ws2_32.lib")
 
 #include "ServerThread.h"
 #include <iostream>
 
-
 DWORD WINAPI ClientThread(LPVOID param) {
     ServerThread* serverThread = static_cast<ServerThread*>(param);
 
     while (serverThread->IsRunning()) {
-        char buffer[1024];
-        int bytesRead = recv(serverThread->GetClientSocket(), buffer, 1024, 0);
+        std::string clientName = "Client " + std::to_string(serverThread->GetClientSocket());
 
-        if (bytesRead <= 0)
-            break;
+    char buffer[1024];
+    int bytesRead = recv(serverThread->GetClientSocket(), buffer, 1024, 0);
 
-        buffer[bytesRead] = '\0';
+    if (bytesRead <= 0)
+        break;
 
-        const char* reply = "Message received by server";
-        send(serverThread->GetClientSocket(), reply, strlen(reply), 0);
+    buffer[bytesRead] = '\0';
 
-        std::cout << reply << std::endl;
-        std::cout << buffer << std::endl;
-        std::cout << std::endl;
+    std::string prefixedMsg = clientName + ": " + buffer;
 
-        serverThread->BroadcastMessage(buffer);
-    }
+    std::cout << "Message received by server" << std::endl;
+    std::cout << buffer << std::endl;
 
-    return 0;
+    serverThread->BroadcastMessage(prefixedMsg.c_str());
+}
+
+return 0;
 }
 
 ServerThread::ServerThread(SOCKET clientSocket) : clientSocket(clientSocket), running(true) {
@@ -53,11 +51,13 @@ SOCKET ServerThread::GetClientSocket() {
     return clientSocket;
 }
 
-void ServerThread::BroadcastMessage(char* message)
+void ServerThread::BroadcastMessage(const char* message)
 {
     for (SOCKET client : *connectedClients)
         if (client != clientSocket) {
             send(client, message, strlen(message), 0);
-            std::cout << "There's more than one client!" << std::endl;
+            std::cout << "Broadcasted message to client " << client << std::endl;
         }
+    std::cout << std::endl;
 }
+
