@@ -1,7 +1,3 @@
-//
-// Created by Mikhail Shkarubski on 7.11.23.
-//
-
 #pragma comment(lib, "Ws2_32.lib")
 
 #include "ClientNetwork.h"
@@ -62,18 +58,25 @@ bool ClientNetwork::Send(const char* message) {
     return true;
 }
 
-bool ClientNetwork::Receive(char* buffer, int bufferSize) {
+bool ClientNetwork::Receive(char* buffer) {
     if (!connected)
         return false;
 
-    int bytesRead = recv(clientSocket, buffer, bufferSize - 1, 0);
+    int bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+
     if (bytesRead <= 0)
         return false;
 
     buffer[bytesRead] = '\0';
+
     return true;
 }
 
 bool ClientNetwork::IsConnected() const {
     return connected;
+}
+
+SOCKET ClientNetwork::GetClientSocket()
+{
+    return clientSocket;
 }

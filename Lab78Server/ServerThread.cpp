@@ -1,42 +1,70 @@
-//
-// Created by Mikhail Shkarubski on 7.11.23.
-//
 #pragma comment(lib, "Ws2_32.lib")
 
 #include "ServerThread.h"
 #include <iostream>
 
 DWORD WINAPI ClientThread(LPVOID param) {
-    ServerThread* serverThread = static_cast<ServerThread*>(param);
+ServerThread* serverThread = static_cast<ServerThread*>(param);
 
-    while (serverThread->IsRunning()) {
-        std::string clientName = "Client " + std::to_string(serverThread->GetClientSocket());
+while (serverThread->IsRunning()) {
+char buffer[1024];
+int bytesRead = recv(serverThread->GetClientSocket(), buffer, 1024, 0);
 
-    char buffer[1024];
-    int bytesRead = recv(serverThread->GetClientSocket(), buffer, 1024, 0);
+if (bytesRead <= 0) {
+serverThread->SetIsRunning(false);
+closesocket(serverThread->GetClientSocket());
 
-    if (bytesRead <= 0)
-        break;
+auto it = std::find(serverThread->GetConnectedClients()->begin(), serverThread->GetConnectedClients()->end(), serverThread->GetClientSocket());
+if (it != serverThread->GetConnectedClients()->end())
+serverThread->GetConnectedClients()->erase(it);
 
-    buffer[bytesRead] = '\0';
+break;
+}
 
-    std::string prefixedMsg = clientName + ": " + buffer;
+buffer[bytesRead] = '\0';
+std::cout << "Message received by server" << std::endl;
+std::cout << buffer << std::endl;
 
-    std::cout << "Message received by server" << std::endl;
-    std::cout << buffer << std::endl;
+if (serverThread->IsFirstMessage()) {
+serverThread->SetClientUsername(buffer);
+serverThread->SetIsFirstMessage(false);
 
-    serverThread->BroadcastMessage(prefixedMsg.c_str());
+continue;
+}
+
+std::string prefixedMsg = serverThread->GetClientUsername() + ": " + buffer;
+
+if (serverThread->GetConnectedClients()->size() > 0)
+serverThread->BroadcastMessage(prefixedMsg.c_str());
 }
 
 return 0;
 }
 
-ServerThread::ServerThread(SOCKET clientSocket) : clientSocket(clientSocket), running(true) {
+ServerThread::ServerThread(SOCKET clientSocket) : clientSocket(clientSocket), running(true), firstMessage(true) {
+    threadHandle = CreateThread(NULL, 0, ClientThread, this, 0, NULL);
+}
+
+ServerThread::ServerThread(SOCKET clientSocket, std::vector<SOCKET>* connectedClients) : clientSocket(clientSocket), running(true), firstMessage(true), connectedClients(connectedClients) {
     threadHandle = CreateThread(NULL, 0, ClientThread, this, 0, NULL);
 }
 
 ServerThread::~ServerThread() {
     CloseHandle(threadHandle);
+}
+
+SOCKET ServerThread::GetClientSocket() {
+    return clientSocket;
+}
+
+std::vector<SOCKET>* ServerThread::GetConnectedClients()
+{
+    return connectedClients;
+}
+
+void ServerThread::SetConnectedClients(std::vector<SOCKET>* connectedClients)
+{
+    connectedClients = connectedClients;
 }
 
 bool ServerThread::IsRunning() {
@@ -47,8 +75,22 @@ void ServerThread::SetIsRunning(bool isRunning) {
     running = isRunning;
 }
 
-SOCKET ServerThread::GetClientSocket() {
-    return clientSocket;
+bool ServerThread::IsFirstMessage() {
+    return firstMessage;
+}
+
+void ServerThread::SetIsFirstMessage(bool isFirstMessage) {
+    firstMessage = isFirstMessage;
+}
+
+std::string ServerThread::GetClientUsername()
+{
+    return clientUsername;
+}
+
+void ServerThread::SetClientUsername(std::string newClientUsername)
+{
+    clientUsername = newClientUsername;
 }
 
 void ServerThread::BroadcastMessage(const char* message)
@@ -58,6 +100,6 @@ void ServerThread::BroadcastMessage(const char* message)
             send(client, message, strlen(message), 0);
             std::cout << "Broadcasted message to client " << client << std::endl;
         }
+
     std::cout << std::endl;
 }
-

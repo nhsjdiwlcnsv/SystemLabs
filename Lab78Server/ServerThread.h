@@ -1,32 +1,33 @@
-//
-// Created by Mikhail Shkarubski on 7.11.23.
-//
-
-#ifndef SYSTEMLABS_SERVERTHREAD_H
-#define SYSTEMLABS_SERVERTHREAD_H
-
 #pragma once
 
 #include <WinSock2.h>
 #include <vector>
-
+#include <string>
 
 class ServerThread {
 public:
     ServerThread(SOCKET clientSocket);
+    ServerThread(SOCKET clientSocket, std::vector<SOCKET>* connectedClients);
     ~ServerThread();
 
+    SOCKET GetClientSocket();
+    std::vector<SOCKET>* GetConnectedClients();
+    void SetConnectedClients(std::vector<SOCKET>* connectedClients);
     bool IsRunning();
     void SetIsRunning(bool isRunning);
-    SOCKET GetClientSocket();
-    void BroadcastMessage(char* message);
+    bool IsFirstMessage();
+    void SetIsFirstMessage(bool isFirstMessage);
+    std::string GetClientUsername();
+    void SetClientUsername(std::string newClientUsername);
 
-    std::vector<SOCKET>* connectedClients;
+    void BroadcastMessage(const char* message);
 
 private:
-    SOCKET clientSocket;
     HANDLE threadHandle;
+    SOCKET clientSocket;
+    std::vector<SOCKET>* connectedClients;
     bool running;
+    bool firstMessage;
+    std::string clientUsername;
 };
 
-#endif //SYSTEMLABS_SERVERTHREAD_H
