@@ -171,7 +171,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     EnableWindow(hwndDisconnectButton, FALSE);
 
     ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
+    UpdateWindow(h;
 
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
