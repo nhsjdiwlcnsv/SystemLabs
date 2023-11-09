@@ -1,11 +1,6 @@
-//
-// Created by Mikhail Shkarubski on 7.11.23.
-//
-
 #pragma comment(lib, "Ws2_32.lib")
 
 #include "ServerNetwork.h"
-
 
 ServerNetwork::~ServerNetwork() {
     closesocket(serverSocket);

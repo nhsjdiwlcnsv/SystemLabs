@@ -1,10 +1,3 @@
-//
-// Created by Mikhail Shkarubski on 7.11.23.
-//
-
-#ifndef SYSTEMLABS_CLIENTNETWORK_H
-#define SYSTEMLABS_CLIENTNETWORK_H
-
 #pragma once
 
 #include <WinSock2.h>
@@ -20,8 +13,10 @@ public:
     bool ConnectToServer();
     void DisconnectFromServer();
     bool Send(const char* message);
-    bool Receive(char* buffer, int bufferSize);
+    bool Receive(char* buffer);
     bool IsConnected() const;
+
+    SOCKET GetClientSocket();
 
 private:
     SOCKET clientSocket;
@@ -29,4 +24,3 @@ private:
     bool connected;
 };
 
-#endif //SYSTEMLABS_CLIENTNETWORK_H
